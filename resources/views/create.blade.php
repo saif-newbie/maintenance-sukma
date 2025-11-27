@@ -1,39 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Tambah Data Penduduk - Multiple Insert</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container mt-4">
+@extends('layouts.master')
+@section('title', 'Tambah Data Penduduk')
+
+@section('content')
+    <div class="container-fluid">
         <div class="row justify-content-center">
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
                         <h4 class="mb-0">
-                            <i class="bi bi-people-fill"></i>
+                            <i class="fas fa-users"></i>
                             Tambah Data Penduduk Baru (Multiple Anggota Keluarga)
                         </h4>
                     </div>
                     <div class="card-body">
                         <!-- Session Flash Messages -->
-                        @if(session()->has('success'))
+                        @if (session()->has('success'))
                             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                <i class="bi bi-check-circle-fill"></i> {{ session('success') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                <i class="fas fa-check-circle"></i> {{ session('success') }}
+                                <button type="button" class="btn-close" data-dismiss="alert"></button>
                             </div>
                         @endif
 
-                        @if(session()->has('error'))
+                        @if (session()->has('error'))
                             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <i class="bi bi-exclamation-triangle-fill"></i> {{ session('error') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                <i class="fas fa-exclamation-triangle"></i> {{ session('error') }}
+                                <button type="button" class="btn-close" data-dismiss="alert"></button>
                             </div>
                         @endif
 
@@ -41,7 +32,7 @@
                         @if ($errors->any())
                             <div class="alert alert-warning alert-dismissible fade show" role="alert">
                                 <h5 class="alert-heading">
-                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                    <i class="fas fa-exclamation-triangle"></i>
                                     Terdapat kesalahan pada input data:
                                 </h5>
                                 <ul class="mb-0">
@@ -49,7 +40,7 @@
                                         <li>{{ $error }}</li>
                                     @endforeach
                                 </ul>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                <button type="button" class="btn-close" data-dismiss="alert"></button>
                             </div>
                         @endif
 
@@ -60,14 +51,15 @@
                             <div class="row mb-4">
                                 <div class="col-12">
                                     <h5 class="border-bottom pb-2 mb-3">
-                                        <i class="bi bi-house-fill"></i> Data Kartu Keluarga
+                                        <i class="fas fa-home"></i> Data Kartu Keluarga
                                     </h5>
                                 </div>
 
                                 <div class="col-md-4 mb-3">
-                                    <label for="nomor_kk" class="form-label">Nomor KK <span class="text-danger">*</span></label>
+                                    <label for="nomor_kk" class="form-label">Nomor KK <span
+                                            class="text-danger">*</span></label>
                                     <input type="number" class="form-control @error('nomor_kk') is-invalid @enderror"
-                                           id="nomor_kk" name="nomor_kk" value="{{ old('nomor_kk') }}" required>
+                                        id="nomor_kk" name="nomor_kk" value="{{ old('nomor_kk') }}" required>
                                     @error('nomor_kk')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
@@ -76,11 +68,14 @@
                                 <div class="col-md-4 mb-3">
                                     <label for="kategori_sejahtera" class="form-label">Kategori Sejahtera</label>
                                     <select class="form-select @error('kategori_sejahtera') is-invalid @enderror"
-                                            id="kategori_sejahtera" name="kategori_sejahtera">
+                                        id="kategori_sejahtera" name="kategori_sejahtera">
                                         <option value="">Pilih Kategori Sejahtera</option>
-                                        <option value="KS1" {{ old('kategori_sejahtera') == 'KS1' ? 'selected' : '' }}>KS1</option>
-                                        <option value="KS2" {{ old('kategori_sejahtera') == 'KS2' ? 'selected' : '' }}>KS2</option>
-                                        <option value="KS3" {{ old('kategori_sejahtera') == 'KS3' ? 'selected' : '' }}>KS3</option>
+                                        <option value="KS1" {{ old('kategori_sejahtera') == 'KS1' ? 'selected' : '' }}>
+                                            KS1</option>
+                                        <option value="KS2" {{ old('kategori_sejahtera') == 'KS2' ? 'selected' : '' }}>
+                                            KS2</option>
+                                        <option value="KS3" {{ old('kategori_sejahtera') == 'KS3' ? 'selected' : '' }}>
+                                            KS3</option>
                                     </select>
                                     @error('kategori_sejahtera')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -90,7 +85,7 @@
                                 <div class="col-md-4 mb-3">
                                     <label for="jenis_bangunan" class="form-label">Jenis Bangunan</label>
                                     <input type="text" class="form-control @error('jenis_bangunan') is-invalid @enderror"
-                                           id="jenis_bangunan" name="jenis_bangunan" value="{{ old('jenis_bangunan') }}">
+                                        id="jenis_bangunan" name="jenis_bangunan" value="{{ old('jenis_bangunan') }}">
                                     @error('jenis_bangunan')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
@@ -99,7 +94,7 @@
                                 <div class="col-md-4 mb-3">
                                     <label for="pemakaian_air" class="form-label">Pemakaian Air</label>
                                     <input type="text" class="form-control @error('pemakaian_air') is-invalid @enderror"
-                                           id="pemakaian_air" name="pemakaian_air" value="{{ old('pemakaian_air') }}">
+                                        id="pemakaian_air" name="pemakaian_air" value="{{ old('pemakaian_air') }}">
                                     @error('pemakaian_air')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
@@ -108,7 +103,7 @@
                                 <div class="col-md-4 mb-3">
                                     <label for="jenis_bantuan" class="form-label">Jenis Bantuan</label>
                                     <input type="text" class="form-control @error('jenis_bantuan') is-invalid @enderror"
-                                           id="jenis_bantuan" name="jenis_bantuan" value="{{ old('jenis_bantuan') }}">
+                                        id="jenis_bantuan" name="jenis_bantuan" value="{{ old('jenis_bantuan') }}">
                                     @error('jenis_bantuan')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
@@ -120,10 +115,10 @@
                                 <div class="col-12">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <h5 class="border-bottom pb-2 mb-0">
-                                            <i class="bi bi-people-fill"></i> Data Anggota Keluarga
+                                            <i class="fas fa-users"></i> Data Anggota Keluarga
                                         </h5>
                                         <button type="button" class="btn btn-success btn-sm" id="tambahAnggota">
-                                            <i class="bi bi-plus-circle"></i> Tambah Anggota
+                                            <i class="fas fa-plus-circle"></i> Tambah Anggota
                                         </button>
                                     </div>
                                 </div>
@@ -151,89 +146,141 @@
                                                 <tr class="anggota-row" data-index="0">
                                                     <td class="text-center">1</td>
                                                     <td>
-                                                        <input type="number" class="form-control nik-input @error('anggota.0.nik') is-invalid @enderror"
-                                                               name="anggota[0][nik]" value="{{ old('anggota.0.nik') }}" required>
+                                                        <input type="number"
+                                                            class="form-control nik-input @error('anggota.0.nik') is-invalid @enderror"
+                                                            name="anggota[0][nik]" value="{{ old('anggota.0.nik') }}"
+                                                            required>
                                                         @error('anggota.0.nik')
                                                             <div class="invalid-feedback d-block">{{ $message }}</div>
                                                         @enderror
                                                     </td>
                                                     <td>
-                                                        <input type="text" class="form-control nama-input @error('anggota.0.nama') is-invalid @enderror"
-                                                               name="anggota[0][nama]" value="{{ old('anggota.0.nama') }}" required>
+                                                        <input type="text"
+                                                            class="form-control nama-input @error('anggota.0.nama') is-invalid @enderror"
+                                                            name="anggota[0][nama]" value="{{ old('anggota.0.nama') }}"
+                                                            required>
                                                         @error('anggota.0.nama')
                                                             <div class="invalid-feedback d-block">{{ $message }}</div>
                                                         @enderror
                                                     </td>
                                                     <td>
-                                                        <select class="form-select gender-input @error('anggota.0.jenis_kelamin') is-invalid @enderror" name="anggota[0][jenis_kelamin]" required>
+                                                        <select
+                                                            class="form-select gender-input @error('anggota.0.jenis_kelamin') is-invalid @enderror"
+                                                            name="anggota[0][jenis_kelamin]" required>
                                                             <option value="">Pilih</option>
-                                                            <option value="Laki-laki" {{ old('anggota.0.jenis_kelamin') == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
-                                                            <option value="Perempuan" {{ old('anggota.0.jenis_kelamin') == 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
+                                                            <option value="Laki-laki"
+                                                                {{ old('anggota.0.jenis_kelamin') == 'Laki-laki' ? 'selected' : '' }}>
+                                                                Laki-laki</option>
+                                                            <option value="Perempuan"
+                                                                {{ old('anggota.0.jenis_kelamin') == 'Perempuan' ? 'selected' : '' }}>
+                                                                Perempuan</option>
                                                         </select>
                                                         @error('anggota.0.jenis_kelamin')
                                                             <div class="invalid-feedback d-block">{{ $message }}</div>
                                                         @enderror
                                                     </td>
                                                     <td>
-                                                        <input type="text" class="form-control tempat-lahir-input @error('anggota.0.tempat_lahir') is-invalid @enderror"
-                                                               name="anggota[0][tempat_lahir]" value="{{ old('anggota.0.tempat_lahir') }}" required>
+                                                        <input type="text"
+                                                            class="form-control tempat-lahir-input @error('anggota.0.tempat_lahir') is-invalid @enderror"
+                                                            name="anggota[0][tempat_lahir]"
+                                                            value="{{ old('anggota.0.tempat_lahir') }}" required>
                                                         @error('anggota.0.tempat_lahir')
                                                             <div class="invalid-feedback d-block">{{ $message }}</div>
                                                         @enderror
                                                     </td>
                                                     <td>
-                                                        <input type="date" class="form-control tgl-lahir-input @error('anggota.0.tgl_lahir') is-invalid @enderror"
-                                                               name="anggota[0][tgl_lahir]" value="{{ old('anggota.0.tgl_lahir') }}" required>
+                                                        <input type="date"
+                                                            class="form-control tgl-lahir-input @error('anggota.0.tgl_lahir') is-invalid @enderror"
+                                                            name="anggota[0][tgl_lahir]"
+                                                            value="{{ old('anggota.0.tgl_lahir') }}" required>
                                                         @error('anggota.0.tgl_lahir')
                                                             <div class="invalid-feedback d-block">{{ $message }}</div>
                                                         @enderror
                                                     </td>
                                                     <td>
                                                         <input type="number" class="form-control usia-input"
-                                                               name="anggota[0][usia]" value="{{ old('anggota.0.usia') }}" readonly>
+                                                            name="anggota[0][usia]" value="{{ old('anggota.0.usia') }}"
+                                                            readonly>
                                                         <small class="text-muted">Auto</small>
                                                     </td>
                                                     <td>
-                                                        <input type="text" class="form-control pekerjaan-input @error('anggota.0.pekerjaan') is-invalid @enderror"
-                                                               name="anggota[0][pekerjaan]" value="{{ old('anggota.0.pekerjaan') }}" required>
+                                                        <input type="text"
+                                                            class="form-control pekerjaan-input @error('anggota.0.pekerjaan') is-invalid @enderror"
+                                                            name="anggota[0][pekerjaan]"
+                                                            value="{{ old('anggota.0.pekerjaan') }}" required>
                                                         @error('anggota.0.pekerjaan')
                                                             <div class="invalid-feedback d-block">{{ $message }}</div>
                                                         @enderror
                                                     </td>
                                                     <td>
-                                                        <select class="form-select hubungan-input @error('anggota.0.hubungan_keluarga') is-invalid @enderror" name="anggota[0][hubungan_keluarga]" required>
+                                                        <select
+                                                            class="form-select hubungan-input @error('anggota.0.hubungan_keluarga') is-invalid @enderror"
+                                                            name="anggota[0][hubungan_keluarga]" required>
                                                             <option value="">Pilih</option>
-                                                            <option value="Kepala Keluarga" {{ old('anggota.0.hubungan_keluarga') == 'Kepala Keluarga' ? 'selected' : '' }}>Kepala Keluarga</option>
-                                                            <option value="Istri" {{ old('anggota.0.hubungan_keluarga') == 'Istri' ? 'selected' : '' }}>Istri</option>
-                                                            <option value="Anak" {{ old('anggota.0.hubungan_keluarga') == 'Anak' ? 'selected' : '' }}>Anak</option>
-                                                            <option value="Menantu" {{ old('anggota.0.hubungan_keluarga') == 'Menantu' ? 'selected' : '' }}>Menantu</option>
-                                                            <option value="Cucu" {{ old('anggota.0.hubungan_keluarga') == 'Cucu' ? 'selected' : '' }}>Cucu</option>
-                                                            <option value="Lainnya" {{ old('anggota.0.hubungan_keluarga') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+                                                            <option value="Kepala Keluarga"
+                                                                {{ old('anggota.0.hubungan_keluarga') == 'Kepala Keluarga' ? 'selected' : '' }}>
+                                                                Kepala Keluarga</option>
+                                                            <option value="Istri"
+                                                                {{ old('anggota.0.hubungan_keluarga') == 'Istri' ? 'selected' : '' }}>
+                                                                Istri</option>
+                                                            <option value="Anak"
+                                                                {{ old('anggota.0.hubungan_keluarga') == 'Anak' ? 'selected' : '' }}>
+                                                                Anak</option>
+                                                            <option value="Menantu"
+                                                                {{ old('anggota.0.hubungan_keluarga') == 'Menantu' ? 'selected' : '' }}>
+                                                                Menantu</option>
+                                                            <option value="Cucu"
+                                                                {{ old('anggota.0.hubungan_keluarga') == 'Cucu' ? 'selected' : '' }}>
+                                                                Cucu</option>
+                                                            <option value="Lainnya"
+                                                                {{ old('anggota.0.hubungan_keluarga') == 'Lainnya' ? 'selected' : '' }}>
+                                                                Lainnya</option>
                                                         </select>
                                                         @error('anggota.0.hubungan_keluarga')
                                                             <div class="invalid-feedback d-block">{{ $message }}</div>
                                                         @enderror
                                                     </td>
                                                     <td>
-                                                        <select class="form-select tamatan-input @error('anggota.0.tamatan') is-invalid @enderror" name="anggota[0][tamatan]" required>
+                                                        <select
+                                                            class="form-select tamatan-input @error('anggota.0.tamatan') is-invalid @enderror"
+                                                            name="anggota[0][tamatan]" required>
                                                             <option value="">Pilih</option>
-                                                            <option value="SD" {{ old('anggota.0.tamatan') == 'SD' ? 'selected' : '' }}>SD</option>
-                                                            <option value="SMP" {{ old('anggota.0.tamatan') == 'SMP' ? 'selected' : '' }}>SMP</option>
-                                                            <option value="SMA/SMK" {{ old('anggota.0.tamatan') == 'SMA/SMK' ? 'selected' : '' }}>SMA/SMK</option>
-                                                            <option value="D1/D2/D3" {{ old('anggota.0.tamatan') == 'D1/D2/D3' ? 'selected' : '' }}>D1/D2/D3</option>
-                                                            <option value="S1" {{ old('anggota.0.tamatan') == 'S1' ? 'selected' : '' }}>S1</option>
-                                                            <option value="S2" {{ old('anggota.0.tamatan') == 'S2' ? 'selected' : '' }}>S2</option>
-                                                            <option value="S3" {{ old('anggota.0.tamatan') == 'S3' ? 'selected' : '' }}>S3</option>
-                                                            <option value="Tidak Tamat SD" {{ old('anggota.0.tamatan') == 'Tidak Tamat SD' ? 'selected' : '' }}>Tidak Tamat SD</option>
-                                                            <option value="Tidak Sekolah" {{ old('anggota.0.tamatan') == 'Tidak Sekolah' ? 'selected' : '' }}>Tidak Sekolah</option>
+                                                            <option value="SD"
+                                                                {{ old('anggota.0.tamatan') == 'SD' ? 'selected' : '' }}>SD
+                                                            </option>
+                                                            <option value="SMP"
+                                                                {{ old('anggota.0.tamatan') == 'SMP' ? 'selected' : '' }}>
+                                                                SMP</option>
+                                                            <option value="SMA/SMK"
+                                                                {{ old('anggota.0.tamatan') == 'SMA/SMK' ? 'selected' : '' }}>
+                                                                SMA/SMK</option>
+                                                            <option value="D1/D2/D3"
+                                                                {{ old('anggota.0.tamatan') == 'D1/D2/D3' ? 'selected' : '' }}>
+                                                                D1/D2/D3</option>
+                                                            <option value="S1"
+                                                                {{ old('anggota.0.tamatan') == 'S1' ? 'selected' : '' }}>S1
+                                                            </option>
+                                                            <option value="S2"
+                                                                {{ old('anggota.0.tamatan') == 'S2' ? 'selected' : '' }}>S2
+                                                            </option>
+                                                            <option value="S3"
+                                                                {{ old('anggota.0.tamatan') == 'S3' ? 'selected' : '' }}>S3
+                                                            </option>
+                                                            <option value="Tidak Tamat SD"
+                                                                {{ old('anggota.0.tamatan') == 'Tidak Tamat SD' ? 'selected' : '' }}>
+                                                                Tidak Tamat SD</option>
+                                                            <option value="Tidak Sekolah"
+                                                                {{ old('anggota.0.tamatan') == 'Tidak Sekolah' ? 'selected' : '' }}>
+                                                                Tidak Sekolah</option>
                                                         </select>
                                                         @error('anggota.0.tamatan')
                                                             <div class="invalid-feedback d-block">{{ $message }}</div>
                                                         @enderror
                                                     </td>
                                                     <td class="text-center">
-                                                        <button type="button" class="btn btn-secondary btn-sm hapus-anggota" disabled
-                                                                title="Tidak bisa menghapus anggota terakhir">
+                                                        <button type="button"
+                                                            class="btn btn-secondary btn-sm hapus-anggota" disabled
+                                                            title="Tidak bisa menghapus anggota terakhir">
                                                             <i class="bi bi-trash"></i>
                                                         </button>
                                                     </td>
@@ -264,11 +311,9 @@
         </div>
     </div>
 
-    <!-- jQuery (must be loaded before Bootstrap) -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <!-- Bootstrap 5 JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+@endsection
 
+@section('script')
     <script>
         $(document).ready(function() {
             let anggotaIndex = 1; // Start from 1 because index 0 already exists
@@ -306,7 +351,7 @@
                 }
             });
 
-            
+
 
             // Fungsi untuk menambah anggota
             $('#tambahAnggota').click(function() {
@@ -418,7 +463,8 @@
                 const rowCount = $('#anggotaContainer .anggota-row').length;
                 const shouldBeDisabled = rowCount <= 1;
 
-                console.log('Update delete buttons - Row count:', rowCount, 'Should be disabled:', shouldBeDisabled);
+                console.log('Update delete buttons - Row count:', rowCount, 'Should be disabled:',
+                shouldBeDisabled);
 
                 $('#anggotaContainer .hapus-anggota').each(function() {
                     const $btn = $(this);
@@ -484,15 +530,26 @@
                     const row = $(this);
                     const nik = row.find('input[name^="anggota"][name$="[nik]"]').val().trim();
                     const nama = row.find('input[name^="anggota"][name$="[nama]"]').val().trim();
-                    const gender = row.find('select[name^="anggota"][name$="[jenis_kelamin]"]').val();
-                    const tempatLahir = row.find('input[name^="anggota"][name$="[tempat_lahir]"]').val().trim();
+                    const gender = row.find('select[name^="anggota"][name$="[jenis_kelamin]"]')
+                    .val();
+                    const tempatLahir = row.find('input[name^="anggota"][name$="[tempat_lahir]"]')
+                        .val().trim();
                     const tglLahir = row.find('input[name^="anggota"][name$="[tgl_lahir]"]').val();
-                    const pekerjaan = row.find('input[name^="anggota"][name$="[pekerjaan]"]').val().trim();
-                    const hubungan = row.find('select[name^="anggota"][name$="[hubungan_keluarga]"]').val();
+                    const pekerjaan = row.find('input[name^="anggota"][name$="[pekerjaan]"]').val()
+                        .trim();
+                    const hubungan = row.find(
+                        'select[name^="anggota"][name$="[hubungan_keluarga]"]').val();
                     const tamatan = row.find('select[name^="anggota"][name$="[tamatan]"]').val();
 
                     console.log(`Validating anggota ${index + 1}:`, {
-                        nik, nama, gender, tempatLahir, tglLahir, pekerjaan, hubungan, tamatan
+                        nik,
+                        nama,
+                        gender,
+                        tempatLahir,
+                        tglLahir,
+                        pekerjaan,
+                        hubungan,
+                        tamatan
                     });
 
                     if (!nik || nik.length !== 16) {
@@ -561,5 +618,4 @@
             });
         });
     </script>
-</body>
-</html>
+@endsection

@@ -15,6 +15,8 @@ class MutasiController extends Controller
     /**
      * Display a listing of the resource.
      */
+
+
     public function index(): View
     {
         // Retrieve all mutasi data with relasi penduduk dan kartu keluarga
