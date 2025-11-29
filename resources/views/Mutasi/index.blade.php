@@ -227,7 +227,7 @@
                                 @endphp
 
                                 @foreach($mutasi as $item)
-                                    <tr>
+                                <tr class="@if($item->jenis_mutasi == 'LAHIR') table-info @elseif($item->jenis_mutasi == 'DATANG') table-success @elseif($item->jenis_mutasi == 'MENINGGAL') table-danger @elseif($item->jenis_mutasi == 'PINDAH') table-warning @endif">
                                         <td class="text-center align-middle">{{ $nomor++ }}</td>
                                         <td class="align-middle">
                                             <strong>{{ $item->penduduk->nama ?? 'Tidak Diketahui' }}</strong>

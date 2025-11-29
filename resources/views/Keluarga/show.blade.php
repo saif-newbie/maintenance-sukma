@@ -25,11 +25,15 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <h5 class="text-primary">Nomor KK</h5>
                         <p class="h4">{{ $kartuKeluarga->no_kk }}</p>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <h5 class="text-primary">Dusun</h5>
+                        <p class="h4">{{ $kartuKeluarga->dusun ?: '-' }}</p>
+                    </div>
+                    <div class="col-md-4">
                         <h5 class="text-primary">Kategori Sejahtera</h5>
                         <p class="h4">{{ $kartuKeluarga->kategori_sejahtera ?: '-' }}</p>
                     </div>
@@ -102,7 +106,7 @@
                                             </span>
                                         </td>
                                         <td class="align-middle">{{ $anggota->pekerjaan }}</td>
-                                        <td class="align-middle">{{ $anggota->pendidikan }}</td>
+                                        <td class="align-middle">{{ $anggota->tamatan }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

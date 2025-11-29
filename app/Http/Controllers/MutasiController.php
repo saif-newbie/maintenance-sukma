@@ -334,9 +334,13 @@ class MutasiController extends Controller
             'tanggal_kejadian' => 'required|date',
             'lokasi_detail' => 'nullable|string|max:255',
             'keterangan' => 'nullable|string|max:1000',
+            // Validasi NIK jika diisi
+            'nik' => 'nullable|numeric|digits:16|unique:penduduks,nik,' . $request->penduduk_id,
         ]);
 
         try {
+            DB::beginTransaction();
+
             // UPDATE DATA MUTASI
             $mutasi->update([
                 'penduduk_id' => $request->penduduk_id,
@@ -346,10 +350,22 @@ class MutasiController extends Controller
                 'keterangan' => $request->keterangan,
             ]);
 
+            // UPDATE NIK PENDUDUK JIKA ADA PERUBAHAN
+            if ($request->has('nik') && !empty($request->nik)) {
+                $penduduk = Penduduk::findOrFail($request->penduduk_id);
+                if ($penduduk->nik !== $request->nik) {
+                    $penduduk->update(['nik' => $request->nik]);
+                    \Log::info("NIK updated via Mutasi Edit for Penduduk ID {$penduduk->id}");
+                }
+            }
+
+            DB::commit();
+
             return redirect()->route('mutasi.index')
                 ->with('success', 'Data mutasi berhasil diperbarui.');
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());

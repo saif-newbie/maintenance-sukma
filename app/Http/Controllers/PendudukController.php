@@ -15,18 +15,61 @@ class PendudukController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): View
+    public function index(Request $request)
     {
-        // Retrieve all penduduk data with proper ordering to maintain insertion sequence
-        // First, get all families ordered by their creation date, then get their members
-        $kartuKeluarga = \App\Models\KartuKeluarga::orderBy('created_at', 'asc')->get();
+        // Start with base query for KartuKeluarga
+        $query = KartuKeluarga::query();
+
+        // Filter by Dusun (if applicable to KK or through Penduduk)
+        // Assuming 'dusun' is on Penduduk model, we filter KKs that have members in that dusun
+        if ($request->filled('dusun')) {
+            $query->whereHas('penduduk', function ($q) use ($request) {
+                $q->where('dusun', $request->dusun);
+            });
+        }
+
+        // Search by Name, NIK, or No KK
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('no_kk', 'like', "%{$search}%")
+                  ->orWhereHas('penduduk', function ($subQ) use ($search) {
+                      $subQ->where('nama', 'like', "%{$search}%")
+                           ->orWhere('nik', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Get the results ordered by creation date
+        $kartuKeluarga = $query->orderBy('created_at', 'asc')->get();
+
         $groupedPenduduk = collect();
 
         foreach ($kartuKeluarga as $kk) {
-            $anggota = Penduduk::with('kartuKeluarga')
+            // Get members for this KK
+            // Apply filters to members as well to ensure consistency
+            $anggotaQuery = Penduduk::with('kartuKeluarga')
                 ->where('kartu_keluarga_id', $kk->id)
-                ->orderBy('created_at', 'asc') // Order family members by insertion date
-                ->get();
+                ->orderBy('created_at', 'asc');
+
+            if ($request->filled('dusun')) {
+                $anggotaQuery->where('dusun', $request->dusun);
+            }
+            
+            // If searching by Name/NIK, we might want to highlight or only show matching members?
+            // Usually in family grouping, we show the whole family if one matches, OR just the matching ones.
+            // Requirement says "population table will begin displaying results".
+            // Let's show all family members if the family matches the search criteria (KK match or Member match)
+            // BUT if we want to be strict, we could filter members too.
+            // However, the view structure relies on grouping by KK.
+            // If we filter members strictly, a KK might show up with 0 members if only the KK number matched?
+            // Let's stick to showing all members of the matching families for context, 
+            // OR we can filter members if the search is specific to a person.
+            
+            // Let's keep it simple: Show all members of the matching families.
+            // This preserves the "Family" context which seems important.
+            
+            $anggota = $anggotaQuery->get();
 
             if ($anggota->isNotEmpty()) {
                 $groupedPenduduk->put($kk->no_kk, $anggota);
@@ -36,7 +79,12 @@ class PendudukController extends Controller
         // Calculate running number for display
         $no = 1;
 
-        return view('index', compact('groupedPenduduk', 'no'));
+        // Return partial view for AJAX requests
+        if ($request->ajax()) {
+            return view('partials.penduduk_table', compact('groupedPenduduk', 'no'))->render();
+        }
+
+        return view('Keluarga.index', compact('groupedPenduduk', 'no'));
     }
 
     /**
@@ -93,7 +141,7 @@ class PendudukController extends Controller
      */
     public function create()
     {
-        return view('create');
+        return view('Keluarga.create');
     }
 
     /**
@@ -116,6 +164,7 @@ class PendudukController extends Controller
                 'digits:16',
                 'unique:kartu_keluarga,no_kk'
             ],
+            'dusun' => 'required|string|max:50',
             'kategori_sejahtera' => 'nullable|string|max:50',
             'jenis_bangunan' => 'nullable|string|max:100',
             'pemakaian_air' => 'nullable|string|max:100',
@@ -182,6 +231,7 @@ class PendudukController extends Controller
             // Step 1: Create Kartu Keluarga record
             $kartuKeluargaData = [
                 'no_kk' => $request->nomor_kk,
+                'dusun' => $request->dusun,
                 'kategori_sejahtera' => $request->kategori_sejahtera,
                 'jenis_bangunan' => $request->jenis_bangunan,
                 'pemakaian_air' => $request->pemakaian_air,
@@ -228,6 +278,8 @@ class PendudukController extends Controller
                     'pekerjaan' => ucwords(strtolower($memberData['pekerjaan'])),
                     'hubungan_keluarga' => $memberData['hubungan_keluarga'],
                     'tamatan' => $memberData['tamatan'],
+                    'tamatan' => $memberData['tamatan'],
+                    'dusun' => $request->dusun, // Sync dusun from KK to Penduduk
                     'status' => 'HIDUP', // Default status for new residents
                 ];
 
@@ -433,7 +485,7 @@ class PendudukController extends Controller
         // Cari data kartu keluarga dengan semua anggotanya
         $kartuKeluarga = KartuKeluarga::with('penduduk')->findOrFail($kartuKeluargaId);
 
-        return view('family.show', compact('kartuKeluarga'));
+        return view('Keluarga.show', compact('kartuKeluarga'));
     }
 
     /**
@@ -444,7 +496,7 @@ class PendudukController extends Controller
         // Cari data kartu keluarga dengan semua anggotanya
         $kartuKeluarga = KartuKeluarga::with('penduduk')->findOrFail($kartuKeluargaId);
 
-        return view('family.edit', compact('kartuKeluarga'));
+        return view('Keluarga.edit', compact('kartuKeluarga'));
     }
 
     /**
@@ -531,33 +583,11 @@ class PendudukController extends Controller
 
             $kartuKeluarga->update($kartuKeluargaUpdateData);
 
-            // Collect existing NIKs and penduduk data for this family
-            $existingAnggota = $kartuKeluarga->penduduk->keyBy('nik');
-            $newNiks = collect($request->anggota)->pluck('nik')->toArray();
-
-            \Log::info('Family Members Update:', [
-                'existing_count' => $existingAnggota->count(),
-                'new_count' => count($request->anggota),
-                'new_niks' => $newNiks
-            ]);
-
-            // Check for NIK conflicts outside this family
-            $nikConflicts = Penduduk::where('kartu_keluarga_id', '!=', $kartuKeluargaId)
-                                    ->whereIn('nik', $newNiks)
-                                    ->exists();
-
-            if ($nikConflicts) {
-                DB::rollBack();
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Beberapa NIK sudah digunakan oleh keluarga lain.');
-            }
-
-            // HAPUS SEMUA ANGGOTA LAMA (permanent delete - forceDelete untuk bypass soft deletes)
-            Penduduk::where('kartu_keluarga_id', $kartuKeluargaId)->forceDelete();
-
-            // SIMPAN ANGGOTA BARU
+            // Collect existing IDs to track which ones to keep/delete
+            $existingMemberIds = $kartuKeluarga->penduduk->pluck('id')->toArray();
+            $processedMemberIds = [];
             $savedMembers = [];
+
             foreach ($request->anggota as $index => $orang) {
                 // Calculate age from birth date
                 $birthDate = new \Carbon\Carbon($orang['tgl_lahir']);
@@ -587,10 +617,63 @@ class PendudukController extends Controller
                     'status' => 'HIDUP',
                 ];
 
-                \Log::info("Creating family member {$index}:", $pendudukData);
+                // Check if this is an existing member (has ID)
+                if (isset($orang['id']) && !empty($orang['id'])) {
+                    $memberId = $orang['id'];
+                    
+                    // Verify this member belongs to this family (security check)
+                    if (in_array($memberId, $existingMemberIds)) {
+                        $penduduk = Penduduk::find($memberId);
+                        
+                        // Check NIK uniqueness excluding this member
+                        $nikConflict = Penduduk::where('nik', $orang['nik'])
+                            ->where('id', '!=', $memberId)
+                            ->exists();
+                            
+                        if ($nikConflict) {
+                            throw new \Exception("NIK {$orang['nik']} sudah digunakan oleh penduduk lain.");
+                        }
 
-                $pendudukBaru = Penduduk::create($pendudukData);
-                $savedMembers[] = $pendudukBaru;
+                        $penduduk->update($pendudukData);
+                        $processedMemberIds[] = $memberId;
+                        $savedMembers[] = $penduduk;
+                        \Log::info("Updated family member {$memberId}", $pendudukData);
+                    } else {
+                        // ID provided but not in this family? Treat as new or error?
+                        // Let's treat as new but warn
+                        \Log::warning("Member ID {$memberId} not found in family {$kartuKeluargaId}, creating new.");
+                        
+                        // Check NIK uniqueness
+                        if (Penduduk::where('nik', $orang['nik'])->exists()) {
+                             throw new \Exception("NIK {$orang['nik']} sudah digunakan oleh penduduk lain.");
+                        }
+                        
+                        $penduduk = Penduduk::create($pendudukData);
+                        $savedMembers[] = $penduduk;
+                    }
+                } else {
+                    // New member
+                    // Check NIK uniqueness
+                    if (Penduduk::where('nik', $orang['nik'])->exists()) {
+                         throw new \Exception("NIK {$orang['nik']} sudah digunakan oleh penduduk lain.");
+                    }
+
+                    $penduduk = Penduduk::create($pendudukData);
+                    $savedMembers[] = $penduduk;
+                    \Log::info("Created new family member", $pendudukData);
+                }
+            }
+
+            // Delete members that were removed from the form
+            $membersToDelete = array_diff($existingMemberIds, $processedMemberIds);
+            if (!empty($membersToDelete)) {
+                // Check if any of these have mutations?
+                // If we delete them, mutations cascade delete.
+                // If the user removed them from the form, they probably intend to delete them.
+                // Or maybe move them? But this form is for editing the family.
+                // Let's proceed with delete (forceDelete as per original logic)
+                Penduduk::whereIn('id', $membersToDelete)->forceDelete();
+                \Log::info("Deleted removed family members: " . implode(', ', $membersToDelete));
             }
 
             DB::commit();

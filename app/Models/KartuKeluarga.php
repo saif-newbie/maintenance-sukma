@@ -17,6 +17,7 @@ class KartuKeluarga extends Model
      */
     protected $fillable = [
         'no_kk',
+        'dusun',
         'kategori_sejahtera',
         'jenis_bangunan',
         'pemakaian_air',

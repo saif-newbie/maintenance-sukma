@@ -6,10 +6,33 @@
     <!-- Page Heading -->
 
     <h1 class="h3 mb-4 text-gray-800">Tabel Penduduk</h1>
-    <div class="mb-3    ">
+    
+    <!-- Action Bar: Add Data & Search/Filter -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
         <a href="{{ route('penduduk.create') }}">
             <button class="btn btn-danger">Tambah Data</button>
         </a>
+
+        <div class="d-flex">
+            <!-- Filter Dusun -->
+            <select id="filterDusun" class="form-control mr-2" style="width: 200px;">
+                <option value="">Semua Dusun</option>
+                <option value="Dusun 1">Dusun 1</option>
+                <option value="Dusun 2">Dusun 2</option>
+                <option value="Dusun 3">Dusun 3</option>
+            </select>
+
+            <!-- Search Box -->
+            <div class="input-group" style="width: 300px;">
+                <input type="text" id="searchPenduduk" class="form-control bg-light border-0 small" 
+                    placeholder="Cari Nama, NIK, atau No KK..." aria-label="Search" aria-describedby="basic-addon2">
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="button">
+                        <i class="fas fa-search fa-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Statistics Summary Cards -->
@@ -95,80 +118,8 @@
                                 <th style="width: 120px;" class="text-center align-middle">Aksi Keluarga</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @php
-                                $nomor = $no;
-                            @endphp
-
-                            @foreach ($groupedPenduduk as $noKk => $anggotaKeluarga)
-                                @php
-                                    $jumlahAnggota = $anggotaKeluarga->count();
-                                    $isFirstRow = true;
-                                    $kartuKeluargaId = $anggotaKeluarga->first()->kartu_keluarga_id;
-                                @endphp
-
-                                @foreach ($anggotaKeluarga as $penduduk)
-                                    <tr>
-                                        @if ($isFirstRow)
-                                            <td rowspan="{{ $jumlahAnggota }}"
-                                                class="text-center align-middle valign-middle"
-                                                style="vertical-align: middle;">
-                                                {{ $nomor }}
-                                            </td>
-                                            <td rowspan="{{ $jumlahAnggota }}"
-                                                class="text-center align-middle valign-middle"
-                                                style="vertical-align: middle;">
-                                                <strong>{{ $penduduk->no_kk }}</strong>
-                                            </td>
-                                        @endif
-
-                                        <td class="align-middle">
-                                            <div>
-                                                {{ $penduduk->nama }}
-                                                @if ($penduduk->peran_keluarga == 'Kepala Keluarga')
-                                                    <span class="badge badge-primary ml-2">KK</span>
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td class="align-middle">{{ $penduduk->nik }}</td>
-                                        <td class="align-middle">{{ $penduduk->peran_keluarga }}</td>
-                                        <td class="align-middle">
-                                            {{ $penduduk->jenis_kelamin == 'L' ? 'Laki-laki' : 'Perempuan' }}
-                                        </td>
-                                        <td class="align-middle">{{ $penduduk->tempat_lahir }}</td>
-                                        <td class="align-middle">
-                                            {{ \Carbon\Carbon::parse($penduduk->tgl_lahir)->format('d/m/Y') }}</td>
-                                        @if ($isFirstRow)
-                                            <td rowspan="{{ $jumlahAnggota }}"
-                                                class="text-center align-middle valign-middle"
-                                                style="vertical-align: middle;">
-                                                <div class="btn-group-vertical" role="group">
-                                                    <a href="{{ route('penduduk.family.show', $kartuKeluargaId) }}"
-                                                        class="btn btn-sm btn-info mb-1" title="Detail Keluarga">
-                                                        <i class="fas fa-users"></i> Detail
-                                                    </a>
-                                                    <a href="{{ route('penduduk.family.edit', $kartuKeluargaId) }}"
-                                                        class="btn btn-sm btn-warning mb-1" title="Edit Keluarga">
-                                                        <i class="fas fa-edit"></i> Edit
-                                                    </a>
-                                                    <button type="button" class="btn btn-sm btn-danger mb-1"
-                                                        title="Hapus Keluarga"
-                                                        onclick="hapusKeluarga({{ $kartuKeluargaId }})">
-                                                        <i class="fas fa-trash"></i> Hapus
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        @endif
-                                    </tr>
-                                    @php
-                                        $isFirstRow = false;
-                                    @endphp
-                                @endforeach
-
-                                @php
-                                    $nomor++;
-                                @endphp
-                            @endforeach
+                        <tbody id="pendudukTableBody">
+                            @include('partials.penduduk_table')
                         </tbody>
                     </table>
                 </div>
@@ -196,6 +147,39 @@
                     e.preventDefault();
                     return false;
                 }
+            });
+
+            // Real-time Search and Filter
+            let searchTimeout;
+            
+            function fetchPenduduk() {
+                const searchQuery = $('#searchPenduduk').val();
+                const dusunFilter = $('#filterDusun').val();
+
+                $.ajax({
+                    url: "{{ route('penduduk.index') }}",
+                    type: "GET",
+                    data: {
+                        search: searchQuery,
+                        dusun: dusunFilter
+                    },
+                    success: function(response) {
+                        $('#pendudukTableBody').html(response);
+                    },
+                    error: function(xhr) {
+                        console.error("Error fetching data:", xhr);
+                    }
+                });
+            }
+
+            // Event listeners
+            $('#searchPenduduk').on('keyup', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(fetchPenduduk, 300); // Debounce 300ms
+            });
+
+            $('#filterDusun').on('change', function() {
+                fetchPenduduk();
             });
         });
 

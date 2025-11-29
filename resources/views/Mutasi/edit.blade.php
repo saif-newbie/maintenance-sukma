@@ -276,6 +276,18 @@
                                             @enderror
                                         </div>
 
+                                        <!-- NIK (Editable for Birth Mutation) -->
+                                        <div class="form-group">
+                                            <label for="nik"><i class="fas fa-id-card"></i> NIK (Edit jika perlu)</label>
+                                            <input type="number" class="form-control" id="nik" name="nik"
+                                                   value="{{ old('nik', $mutasi->penduduk->nik) }}"
+                                                   placeholder="Masukkan NIK baru jika ingin mengubah">
+                                            <small class="form-text text-muted">Mengubah NIK di sini akan memperbarui data NIK penduduk terkait.</small>
+                                            @error('nik')
+                                                <div class="text-danger small mt-1">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+
                                         <!-- Jenis Mutasi -->
                                         <div class="form-group">
                                             <label for="jenis_mutasi"><i class="fas fa-exchange-alt"></i> Jenis Mutasi</label>

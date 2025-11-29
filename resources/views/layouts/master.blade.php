@@ -113,72 +113,93 @@
         /* Styling Navbar Atas */
         nav.topbar {
             box-shadow: 0 .15rem 1.75rem 0 rgba(58, 59, 69, .15) !important;
+            height: auto !important; /* Allow expansion for mobile menu */
+            min-height: 4.375rem; /* Maintain original minimum height */
+        }
+
+        /* Responsive Width Utility */
+        @media (min-width: 992px) {
+            .w-lg-auto {
+                width: auto !important;
+            }
         }
     </style>
+    @stack('styles')
 
 </head>
 
 <body id="page-top">
 
     <div id="wrapper">
-
-        <ul class="navbar-nav bg-gradient-dark-blue sidebar sidebar-dark accordion" id="accordionSidebar">
-
-            <a class="sidebar-brand d-flex align-items-center justify-content-center"
-                href="{{ route('penduduk.index') }}">
-                <div class="sidebar-brand-icon">
-                    <i class="fas fa-building"></i>
-                </div>
-                <div class="sidebar-brand-text mx-3">SISTEM INFORMASI</div>
-            </a>
-
-            <hr class="sidebar-divider my-0">
-
-            <li class="nav-item {{ request()->routeIs('penduduk.*') ? 'active' : '' }}">
-                <a class="nav-link" href="{{ route('penduduk.index') }}">
-                    <i class="fas fa-fw fa-users"></i>
-                    <span>Penduduk</span>
-                </a>
-            </li>
-
-            <li class="nav-item {{ request()->routeIs('mutasi.*') ? 'active' : '' }}">
-                <a class="nav-link" href="{{ route('mutasi.index') }}">
-                    <i class="fas fa-fw fa-exchange-alt"></i>
-                    <span>Mutasi</span>
-                </a>
-            </li>
-
-            <hr class="sidebar-divider d-none d-md-block">
-
-            <div class="text-center d-none d-md-inline">
-                <button class="rounded-circle border-0" id="sidebarToggle"></button>
-            </div>
-
-        </ul>
         <div id="content-wrapper" class="d-flex flex-column">
-
             <div id="content">
+                <!-- Topbar -->
+                <nav class="navbar navbar-expand-lg navbar-dark bg-gradient-dark-blue topbar mb-4 static-top shadow">
+                    <div class="container">
+                        <!-- Sidebar Brand (Logo) -->
+                        <a class="navbar-brand d-flex align-items-center justify-content-center" href="{{ route('penduduk.index') }}">
+                            <div class="sidebar-brand-icon rotate-n-15 mr-2">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="sidebar-brand-text font-weight-bold">SISTEM INFORMASI</div>
+                        </a>
 
-                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                        <!-- Topbar Navbar Toggle (Mobile) -->
+                        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
 
-                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
-                        <i class="fa fa-bars"></i>
-                    </button>
+                        <!-- Topbar Navbar (Links) -->
+                        <!-- Topbar Navbar (Links & User Info) -->
+                        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                            
+                            <!-- 1. User Profile (Top on Mobile, Right on Desktop) -->
+                            <ul class="navbar-nav ml-auto align-items-center order-1 order-lg-2 mb-3 mb-lg-0">
+                                <li class="nav-item d-flex align-items-center">
+                                    <span class="mr-2 text-white small font-weight-bold">Admin</span>
+                                    <img class="img-profile rounded-circle" src="{{ asset('asset/img/undraw_profile.svg') }}" style="height: 2rem; width: 2rem;" onerror="this.src='https://source.unsplash.com/QAB-WJcbgJk/60x60'">
+                                </li>
+                            </ul>
 
-                    <ul class="navbar-nav ml-auto">
-                        <li class="nav-item dropdown no-arrow">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Admin</span>
-                            </a>
-                        </li>
-                    </ul>
+                            <!-- 2. Links (Middle on Mobile, Left on Desktop) -->
+                            <ul class="navbar-nav mr-auto order-2 order-lg-1 mb-3 mb-lg-0">
+                                <li class="nav-item {{ request()->routeIs('penduduk.*') ? 'active' : '' }}">
+                                    <a class="nav-link" href="{{ route('penduduk.index') }}">
+                                        <i class="fas fa-fw fa-users mr-1"></i>
+                                        <span>Penduduk</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item {{ request()->routeIs('mutasi.*') ? 'active' : '' }}">
+                                    <a class="nav-link" href="{{ route('mutasi.index') }}">
+                                        <i class="fas fa-fw fa-exchange-alt mr-1"></i>
+                                        <span>Mutasi</span>
+                                    </a>
+                                </li>
+                            </ul>
 
+                            <!-- 3. Logout Button (Bottom on Mobile, Right on Desktop) -->
+                            <div class="d-flex align-items-center order-3 order-lg-3 ml-lg-3 w-100 w-lg-auto">
+                                <a class="btn btn-danger btn-sm w-100 w-lg-auto" href="#" data-toggle="modal" data-target="#logoutModal">
+                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-1"></i>
+                                    Logout
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </nav>
-                <div class="container-fluid">
+                <!-- End of Topbar -->
+
+                <!-- Begin Page Content -->
+                <div class="container">
                     @yield('content')
                 </div>
+                <!-- /.container-fluid -->
+
             </div>
+            <!-- End of Main Content -->
+
+            <!-- Footer -->
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
@@ -186,7 +207,10 @@
                     </div>
                 </div>
             </footer>
+            <!-- End of Footer -->
+
         </div>
+        <!-- End of Content Wrapper -->
     </div>
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
@@ -219,6 +243,7 @@
     <script src="{{ asset('asset/js/sb-admin-2.min.js') }}"></script>
 
     @yield('script')
+    @stack('scripts')
 
 </body>
 
