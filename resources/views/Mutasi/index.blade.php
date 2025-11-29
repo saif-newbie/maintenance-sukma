@@ -9,9 +9,21 @@
         <!-- Page Heading -->
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0 text-gray-800">Data Mutasi Penduduk</h1>
-            <a href="{{ route('mutasi.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                <i class="fas fa-plus fa-sm text-white-50"></i> Tambah Mutasi
-            </a>
+            <div class="d-flex align-items-center">
+                <!-- Filter Dusun -->
+                <select id="filterDusun" class="form-control mr-2" style="width: 200px;">
+                    <option value="">Semua Dusun</option>
+                    @if(isset($availableDusuns))
+                        @foreach($availableDusuns as $dusun)
+                            <option value="{{ $dusun }}">{{ $dusun }}</option>
+                        @endforeach
+                    @endif
+                </select>
+
+                <a href="{{ route('mutasi.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                    <i class="fas fa-plus fa-sm text-white-50"></i> Tambah Mutasi
+                </a>
+            </div>
         </div>
 
         <!-- Flash Messages -->
@@ -221,68 +233,8 @@
                                     <th style="width: 120px;" class="text-center align-middle">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @php
-                                    $nomor = 1;
-                                @endphp
-
-                                @foreach($mutasi as $item)
-                                <tr class="@if($item->jenis_mutasi == 'LAHIR') table-info @elseif($item->jenis_mutasi == 'DATANG') table-success @elseif($item->jenis_mutasi == 'MENINGGAL') table-danger @elseif($item->jenis_mutasi == 'PINDAH') table-warning @endif">
-                                        <td class="text-center align-middle">{{ $nomor++ }}</td>
-                                        <td class="align-middle">
-                                            <strong>{{ $item->penduduk->nama ?? 'Tidak Diketahui' }}</strong>
-                                            @if($item->penduduk && $item->penduduk->hubungan_keluarga == 'Kepala Keluarga')
-                                                <span class="badge badge-primary ml-2">KK</span>
-                                            @endif
-                                        </td>
-                                        <td class="align-middle">{{ $item->penduduk->nik ?? '-' }}</td>
-                                        <td class="align-middle">
-                                            {{ $item->penduduk && $item->penduduk->kartuKeluarga ? $item->penduduk->kartuKeluarga->no_kk : '-' }}
-                                        </td>
-                                        <td class="align-middle">
-                                            @switch($item->jenis_mutasi)
-                                                @case('LAHIR')
-                                                    <span class="badge badge-success">👶 Lahir</span>
-                                                    @break
-                                                @case('MENINGGAL')
-                                                    <span class="badge badge-dark">⚰️ Meninggal</span>
-                                                    @break
-                                                @case('DATANG')
-                                                    <span class="badge badge-info">🏠 Datang</span>
-                                                    @break
-                                                @case('PINDAH')
-                                                    <span class="badge badge-warning">🚚 Pindah</span>
-                                                    @break
-                                                @default
-                                                    <span class="badge badge-secondary">{{ $item->jenis_mutasi }}</span>
-                                            @endswitch
-                                        </td>
-                                        <td class="align-middle">{{ \Carbon\Carbon::parse($item->tanggal_kejadian)->format('d/m/Y') }}</td>
-                                        <td class="align-middle">{{ $item->lokasi_detail ?: '-' }}</td>
-                                        <td class="align-middle">
-                                            <span title="{{ $item->keterangan }}">
-                                                {{ \Illuminate\Support\Str::limit($item->keterangan ?: '-', 30) }}
-                                            </span>
-                                        </td>
-                                        <td class="text-center align-middle">
-                                            <div class="btn-group" role="group">
-                                                <a href="{{ route('mutasi.show', $item->id) }}" class="btn btn-sm btn-info" title="Detail">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="{{ route('mutasi.edit', $item->id) }}" class="btn btn-sm btn-warning" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <form action="{{ route('mutasi.destroy', $item->id) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data mutasi ini?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger" title="Hapus">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
+                            <tbody id="mutasiTableBody">
+                                @include('partials.mutasi_table')
                             </tbody>
                         </table>
                     </div>
@@ -382,4 +334,75 @@
 
                 </div>
                 <!-- /.container-fluid -->
+@endsection
+
+@section('scripts')
+    <script>
+        $(document).ready(function() {
+            // Real-time Filter for Mutasi Data
+            let filterTimeout;
+
+            function fetchMutasi() {
+                const dusunFilter = $('#filterDusun').val();
+
+                $.ajax({
+                    url: "{{ route('mutasi.index') }}",
+                    type: "GET",
+                    data: {
+                        dusun: dusunFilter
+                    },
+                    success: function(response) {
+                        $('#mutasiTableBody').html(response);
+                    },
+                    error: function(xhr) {
+                        console.error("Error fetching mutasi data:", xhr);
+                    }
+                });
+            }
+
+            function updateDusunFilter() {
+                $.ajax({
+                    url: "{{ route('mutasi.available-dusuns') }}",
+                    type: "GET",
+                    success: function(dusuns) {
+                        let select = $('#filterDusun');
+                        let currentValue = select.val();
+
+                        // Clear existing options except "Semua Dusun"
+                        select.find('option:not(:first)').remove();
+
+                        // Add new options
+                        dusuns.forEach(function(dusun) {
+                            select.append('<option value="' + dusun + '">' + dusun + '</option>');
+                        });
+
+                        // Restore previous selection if it still exists
+                        if (currentValue) {
+                            select.val(currentValue);
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error("Error fetching available dusuns:", xhr);
+                    }
+                });
+            }
+
+            function refreshDataAndFilter() {
+                updateDusunFilter();
+                fetchMutasi();
+            }
+
+            // Event listener for dusun filter
+            $('#filterDusun').on('change', function() {
+                fetchMutasi();
+            });
+
+            // Auto-refresh after successful mutation creation
+            // Check if there's a success message and refresh both table and filter
+            @if(session('success'))
+                // If there's a success message, refresh both table and filter to show new data
+                refreshDataAndFilter();
+            @endif
+        });
+    </script>
 @endsection

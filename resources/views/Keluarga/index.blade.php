@@ -17,9 +17,11 @@
             <!-- Filter Dusun -->
             <select id="filterDusun" class="form-control mr-2" style="width: 200px;">
                 <option value="">Semua Dusun</option>
-                <option value="Dusun 1">Dusun 1</option>
-                <option value="Dusun 2">Dusun 2</option>
-                <option value="Dusun 3">Dusun 3</option>
+                @if(isset($availableDusuns))
+                    @foreach($availableDusuns as $dusun)
+                        <option value="{{ $dusun }}">{{ $dusun }}</option>
+                    @endforeach
+                @endif
             </select>
 
             <!-- Search Box -->
@@ -151,7 +153,7 @@
 
             // Real-time Search and Filter
             let searchTimeout;
-            
+
             function fetchPenduduk() {
                 const searchQuery = $('#searchPenduduk').val();
                 const dusunFilter = $('#filterDusun').val();
@@ -172,6 +174,38 @@
                 });
             }
 
+            function updateDusunFilter() {
+                $.ajax({
+                    url: "{{ route('penduduk.available-dusuns') }}",
+                    type: "GET",
+                    success: function(dusuns) {
+                        let select = $('#filterDusun');
+                        let currentValue = select.val();
+
+                        // Clear existing options except "Semua Dusun"
+                        select.find('option:not(:first)').remove();
+
+                        // Add new options
+                        dusuns.forEach(function(dusun) {
+                            select.append('<option value="' + dusun + '">' + dusun + '</option>');
+                        });
+
+                        // Restore previous selection if it still exists
+                        if (currentValue) {
+                            select.val(currentValue);
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error("Error fetching available dusuns:", xhr);
+                    }
+                });
+            }
+
+            function refreshDataAndFilter() {
+                updateDusunFilter();
+                fetchPenduduk();
+            }
+
             // Event listeners
             $('#searchPenduduk').on('keyup', function() {
                 clearTimeout(searchTimeout);
@@ -181,6 +215,15 @@
             $('#filterDusun').on('change', function() {
                 fetchPenduduk();
             });
+
+            // Auto-refresh after successful mutation creation from other pages
+            // Check for success message from session that might indicate new data was added
+            @if(session()->has('success') && (str_contains(session('success'), 'DATANG') || str_contains(session('success'), 'LAHIR') || str_contains(session('success'), 'ditambahkan')))
+                refreshDataAndFilter();
+            @endif
+
+            // Also refresh dusun options on page load to ensure we have latest data
+            updateDusunFilter();
         });
 
         // Function untuk menghapus keluarga

@@ -16,18 +16,49 @@ class MutasiController extends Controller
      * Display a listing of the resource.
      */
 
+    public function availableDusuns()
+    {
+        $dusuns = KartuKeluarga::distinct()
+            ->whereNotNull('dusun')
+            ->where('dusun', '!=', '')
+            ->orderBy('dusun')
+            ->pluck('dusun');
 
-    public function index(): View
+        return response()->json($dusuns);
+    }
+
+    public function index(Request $request)
     {
         // Retrieve all mutasi data with relasi penduduk dan kartu keluarga
         // Order by creation date to maintain insertion sequence (oldest first)
         // This ensures new mutations appear at the end of the sequence
-        $mutasi = Mutasi::with('penduduk.kartuKeluarga')
+        $query = Mutasi::with('penduduk.kartuKeluarga')
             ->orderBy('created_at', 'asc') // Primary sorting: oldest first
-            ->orderBy('tanggal_kejadian', 'asc') // Secondary sorting: chronological
-            ->get();
+            ->orderBy('tanggal_kejadian', 'asc'); // Secondary sorting: chronological
 
-        return view('mutasi.index', compact('mutasi'));
+        // Apply dusun filter if provided
+        if ($request->has('dusun') && !empty($request->dusun)) {
+            $query->whereHas('penduduk.kartuKeluarga', function($q) use ($request) {
+                $q->where('dusun', $request->dusun);
+            });
+        }
+
+        $mutasi = $query->get();
+
+        // Get available dusuns for filter
+        $availableDusuns = KartuKeluarga::distinct()
+            ->whereNotNull('dusun')
+            ->where('dusun', '!=', '')
+            ->orderBy('dusun')
+            ->pluck('dusun');
+
+        // Check if this is an AJAX request
+        if ($request->ajax() || $request->wantsJson()) {
+            // Return only the table body content for AJAX requests
+            return view('partials.mutasi_table', compact('mutasi'))->render();
+        }
+
+        return view('mutasi.index', compact('mutasi', 'availableDusuns'));
     }
 
     /**
@@ -47,7 +78,14 @@ class MutasiController extends Controller
             $query->where('hubungan_keluarga', 'Kepala Keluarga');
         }])->orderBy('no_kk')->get();
 
-        return view('mutasi.create', compact('penduduk', 'kartuKeluarga'));
+        // Get available dusuns for dropdown
+        $availableDusuns = KartuKeluarga::distinct()
+            ->whereNotNull('dusun')
+            ->where('dusun', '!=', '')
+            ->orderBy('dusun')
+            ->pluck('dusun');
+
+        return view('mutasi.create', compact('penduduk', 'kartuKeluarga', 'availableDusuns'));
     }
 
     /**
@@ -89,7 +127,9 @@ class MutasiController extends Controller
                     'hubungan_keluarga' => 'required|string|max:255',
                     'tamatan' => 'required|string|max:255',
                     'dusun' => 'nullable|string|max:255',
-                    'kartu_keluarga_id' => 'required|exists:kartu_keluarga,id',
+                    // Modified validation: Allow either existing KK ID or new KK number
+                    'kartu_keluarga_id' => 'required|string',
+                    'new_kk_number' => 'nullable|string|size:16|unique:kartu_keluarga,no_kk',
                 ]);
             } else {
                 // Family arrival validation
@@ -119,6 +159,37 @@ class MutasiController extends Controller
 
         $request->validate($rules);
 
+        // Custom validation for KK number handling
+        if (in_array($request->jenis_mutasi, ['LAHIR', 'DATANG']) &&
+            ($request->jenis_mutasi === 'LAHIR' || $request->arrival_mode === 'individu')) {
+
+            $kkValue = $request->kartu_keluarga_id;
+            $newKkNumber = $request->new_kk_number;
+
+            // Check if this is a new KK number (starts with 'new_')
+            if (str_starts_with($kkValue, 'new_')) {
+                $newKkNumber = substr($kkValue, 4); // Remove 'new_' prefix
+                $request->merge(['new_kk_number' => $newKkNumber]);
+            }
+
+            // Validate the KK logic
+            if ($newKkNumber) {
+                // This is a new KK number, validate it doesn't exist
+                if (KartuKeluarga::where('no_kk', $newKkNumber)->exists()) {
+                    return redirect()->back()
+                        ->withErrors(['kartu_keluarga_id' => 'Nomor KK ini sudah ada di sistem. Silakan pilih dari daftar.'])
+                        ->withInput();
+                }
+            } else {
+                // This should be an existing KK ID
+                if (!is_numeric($kkValue) || !KartuKeluarga::where('id', $kkValue)->exists()) {
+                    return redirect()->back()
+                        ->withErrors(['kartu_keluarga_id' => 'Kartu Keluarga yang dipilih tidak valid.'])
+                        ->withInput();
+                }
+            }
+        }
+
         // Gunakan DB Transaction untuk memastikan konsistensi data
         return DB::transaction(function () use ($request) {
             try {
@@ -135,6 +206,30 @@ class MutasiController extends Controller
                             $nik = $this->generateNik($request->tgl_lahir, $request->jenis_kelamin);
                         }
 
+                        // Handle both existing and new KK
+                        $kartuKeluargaId = $request->kartu_keluarga_id;
+                        $newKkNumber = $request->new_kk_number;
+
+                        // Check if we need to create a new KartuKeluarga
+                        if ($newKkNumber || str_starts_with($kartuKeluargaId, 'new_')) {
+                            // Create new KartuKeluarga for the individual
+                            $newKartuKeluarga = KartuKeluarga::create([
+                                'no_kk' => $newKkNumber ?: substr($kartuKeluargaId, 4),
+                                'dusun' => $request->dusun, // Save the dusun field from form
+                                'kategori_sejahtera' => null, // Can be filled later
+                                'jenis_bangunan' => null, // Can be filled later
+                                'pemakaian_air' => null, // Can be filled later
+                                'jenis_bantuan' => null, // Can be filled later
+                            ]);
+                            $kartuKeluargaId = $newKartuKeluarga->id;
+                        } elseif (is_numeric($kartuKeluargaId)) {
+                            // For existing KK, update the dusun field if provided
+                            $existingKK = KartuKeluarga::find($kartuKeluargaId);
+                            if ($existingKK && $request->dusun && $existingKK->dusun !== $request->dusun) {
+                                $existingKK->update(['dusun' => $request->dusun]);
+                            }
+                        }
+
                         $penduduk = Penduduk::create([
                             'nik' => $nik,
                             'nama' => $request->nama,
@@ -145,7 +240,7 @@ class MutasiController extends Controller
                             'hubungan_keluarga' => $request->hubungan_keluarga,
                             'tamatan' => $request->tamatan,
                             'dusun' => $request->dusun,
-                            'kartu_keluarga_id' => $request->kartu_keluarga_id,
+                            'kartu_keluarga_id' => $kartuKeluargaId,
                             'status' => 'HIDUP',
                         ]);
 
@@ -154,6 +249,7 @@ class MutasiController extends Controller
                         // Family arrival - Create new Kartu Keluarga first
                         $kartuKeluarga = KartuKeluarga::create([
                             'no_kk' => $request->family_nomor_kk,
+                            'dusun' => $request->dusun, // Also save dusun for family arrival
                             'kategori_sejahtera' => $request->family_kategori_sejahtera,
                             'jenis_bangunan' => $request->family_jenis_bangunan,
                             'pemakaian_air' => $request->family_pemakaian_air,
@@ -247,11 +343,20 @@ class MutasiController extends Controller
                     if ($request->arrival_mode === 'keluarga') {
                         $successMessage = "✅ Data kedatangan berhasil disimpan! {$memberCount} anggota keluarga dengan Nomor KK {$request->family_nomor_kk} telah ditambahkan.";
                     } else {
-                        $successMessage = "✅ Data kedatangan individu berhasil disimpan.";
+                        // Check if this was a new KK or existing KK
+                        if ($request->new_kk_number || str_starts_with($request->kartu_keluarga_id, 'new_')) {
+                            $kkNumber = $request->new_kk_number ?: substr($request->kartu_keluarga_id, 4);
+                            $successMessage = "✅ Data kedatangan berhasil disimpan! Penduduk baru telah ditambahkan dengan Nomor KK {$kkNumber}.";
+                        } else {
+                            $successMessage = "✅ Data kedatangan individu berhasil disimpan pada KK yang ada.";
+                        }
                     }
                 } elseif ($request->jenis_mutasi === 'LAHIR') {
                     $successMessage = "✅ Data kelahiran berhasil dicatat.";
                 }
+
+                // Flash session success message that can be detected by Data Penduduk page
+                session()->flash('data_updated', true);
 
                 return redirect()->route('mutasi.index')
                     ->with('success', $successMessage);

@@ -13,6 +13,20 @@ use Carbon\Carbon;
 class PendudukController extends Controller
 {
     /**
+     * Get available dusuns for filter
+     */
+    public function availableDusuns()
+    {
+        $dusuns = KartuKeluarga::distinct()
+            ->whereNotNull('dusun')
+            ->where('dusun', '!=', '')
+            ->orderBy('dusun')
+            ->pluck('dusun');
+
+        return response()->json($dusuns);
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
@@ -79,12 +93,19 @@ class PendudukController extends Controller
         // Calculate running number for display
         $no = 1;
 
+        // Get available dusuns for filter
+        $availableDusuns = KartuKeluarga::distinct()
+            ->whereNotNull('dusun')
+            ->where('dusun', '!=', '')
+            ->orderBy('dusun')
+            ->pluck('dusun');
+
         // Return partial view for AJAX requests
         if ($request->ajax()) {
             return view('partials.penduduk_table', compact('groupedPenduduk', 'no'))->render();
         }
 
-        return view('Keluarga.index', compact('groupedPenduduk', 'no'));
+        return view('Keluarga.index', compact('groupedPenduduk', 'no', 'availableDusuns'));
     }
 
     /**

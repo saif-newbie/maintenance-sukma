@@ -10,7 +10,9 @@ Route::get('/', function () {
 });
 
 Route::resource('/mutasi', MutasiController::class);
+Route::get('/mutasi/available-dusuns', [MutasiController::class, 'availableDusuns'])->name('mutasi.available-dusuns');
 Route::resource('/penduduk', PendudukController::class);
+Route::get('/penduduk/available-dusuns', [PendudukController::class, 'availableDusuns'])->name('penduduk.available-dusuns');
 
 // Family-based routes for Penduduk
 Route::prefix('penduduk')->name('penduduk.')->group(function () {

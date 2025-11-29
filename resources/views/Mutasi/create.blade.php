@@ -112,6 +112,103 @@
             background-color: #f8f9fc;
             border-color: #d1d3e2;
         }
+
+        /* Custom styles for KK number input */
+        .kk-input-container {
+            position: relative;
+        }
+
+        #kkSuggestions {
+            max-height: 200px;
+            overflow-y: auto;
+            border-radius: 0.35rem !important;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+        }
+
+        #kkSuggestions .alert-info {
+            margin-bottom: 0;
+            border-radius: 0.35rem;
+        }
+
+        /* Adjust Select2 dropdown for better UX */
+        .select2-results__option {
+            padding: 8px 12px !important;
+        }
+
+        .select2-results__option[aria-selected="true"] {
+            background-color: #e9ecef !important;
+        }
+
+        .select2-results__option--highlighted[aria-selected] {
+            background-color: #667eea !important;
+            color: white !important;
+        }
+
+        /* Make the Dusun field match height with KK select */
+        #dusun {
+            height: 38px !important;
+        }
+
+        /* Better responsive layout for small screens */
+        @media (max-width: 768px) {
+            .kk-input-container {
+                margin-bottom: 1rem;
+            }
+
+            #dusun {
+                margin-top: 1rem;
+            }
+        }
+
+        /* Auto-fill feedback styles */
+        .border-success {
+            border-color: #28a745 !important;
+            border-width: 2px !important;
+            transition: all 0.3s ease;
+        }
+
+        .bg-light {
+            background-color: #f8f9fa !important;
+            transition: all 0.3s ease;
+        }
+
+        .alert-sm {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            border-radius: 0.35rem;
+            margin-bottom: 0;
+        }
+
+        /* Enhanced Select2 options for better UX */
+        .select2-results__option {
+            padding: 12px !important;
+            border-bottom: 1px solid #f1f3f5;
+        }
+
+        .select2-results__option:last-child {
+            border-bottom: none;
+        }
+
+        .select2-results__option[aria-selected="true"] {
+            background-color: #e9ecef;
+            font-weight: 500;
+        }
+
+        /* Feedback animation */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert.alert-success[style*="position: absolute"] {
+            animation: slideDown 0.3s ease;
+        }
     </style>
 @endpush
 
@@ -239,7 +336,59 @@
                                 <!-- Individual Arrival Mode -->
                                 <div id="individuForm">
                                     <h5 class="text-gray-800 mb-3 border-bottom pb-2">2. Data Penduduk Baru (Individu)</h5>
-                                    
+
+                                    <!-- Family Card Number and Dusun at Top -->
+                                    <div class="row">
+                                        <div class="col-md-8 mb-3">
+                                            <label for="kartu_keluarga_id" class="font-weight-bold">
+                                                Nomor Kartu Keluarga <span class="text-danger">*</span>
+                                            </label>
+                                            <div class="kk-input-container position-relative">
+                                                <select class="form-control select2-kk @error('kartu_keluarga_id') is-invalid @enderror"
+                                                        id="kartu_keluarga_id" name="kartu_keluarga_id"
+                                                        data-placeholder="Ketik nomor KK atau nama kepala keluarga..."
+                                                        style="width: 100%;">
+                                                    <option value="">Pilih Kartu Keluarga</option>
+                                                    @foreach($kartuKeluarga as $kk)
+                                                        <option value="{{ $kk->id }}" {{ old('kartu_keluarga_id') == $kk->id ? 'selected' : '' }}>
+                                                            {{ $kk->no_kk }} - {{ $kk->penduduk->first()->nama ?? 'Tidak ada Kepala Keluarga' }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <!-- Auto-suggestions container for new KK numbers -->
+                                                <div id="kkSuggestions" class="position-absolute w-100 bg-white border rounded shadow-sm mt-1" style="z-index: 1000; display: none;">
+                                                    <div class="p-2">
+                                                        <small class="text-muted">Nomor KK tidak ditemukan. Tekan Enter untuk menggunakan nomor baru:</small>
+                                                        <div id="newKkPreview" class="alert alert-info small mt-1" style="display: none;"></div>
+                                                    </div>
+                                                </div>
+                                                @error('kartu_keluarga_id')
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+                                                <small class="form-text text-muted">
+                                                    Ketik nomor KK yang sudah ada atau masukkan nomor KK baru
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="dusun" class="font-weight-bold">Dusun</label>
+                                            <select class="form-control @error('dusun') is-invalid @enderror"
+                                                    id="dusun" name="dusun"
+                                                    style="height: 38px; width: 100%;">
+                                                <option value="">Pilih Dusun</option>
+                                                <option value="Dusun 1" {{ old('dusun') == 'Dusun 1' ? 'selected' : '' }}>Dusun 1</option>
+                                                <option value="Dusun 2" {{ old('dusun') == 'Dusun 2' ? 'selected' : '' }}>Dusun 2</option>
+                                                <option value="Dusun 3" {{ old('dusun') == 'Dusun 3' ? 'selected' : '' }}>Dusun 3</option>
+                                            </select>
+                                            @error('dusun')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                            <small class="form-text text-muted">
+                                                Pilih dusun yang tersedia atau ketik manual untuk dusun baru
+                                            </small>
+                                        </div>
+                                    </div>
+
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="nik" class="font-weight-bold">NIK <span class="text-danger">*</span></label>
@@ -341,35 +490,6 @@
                                         </div>
                                     </div>
 
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="dusun" class="font-weight-bold">Dusun</label>
-                                            <input type="text" class="form-control @error('dusun') is-invalid @enderror"
-                                                   id="dusun" name="dusun" value="{{ old('dusun') }}"
-                                                   placeholder="Nama Dusun">
-                                            @error('dusun')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="kartu_keluarga_id" class="font-weight-bold">
-                                                Nomor Kartu Keluarga <span class="text-danger">*</span>
-                                            </label>
-                                            <select class="form-control select2-kk @error('kartu_keluarga_id') is-invalid @enderror"
-                                                    id="kartu_keluarga_id" name="kartu_keluarga_id"
-                                                    data-placeholder="Cari nomor KK atau nama kepala keluarga...">
-                                                <option value="">Pilih Kartu Keluarga</option>
-                                                @foreach($kartuKeluarga as $kk)
-                                                    <option value="{{ $kk->id }}" {{ old('kartu_keluarga_id') == $kk->id ? 'selected' : '' }}>
-                                                        {{ $kk->no_kk }} - {{ $kk->penduduk->first()->nama ?? 'Tidak ada Kepala Keluarga' }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            @error('kartu_keluarga_id')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-                                    </div>
                                 </div>
                                 <!-- Individual Form End -->
 
@@ -392,6 +512,23 @@
                                             @error('family_nomor_kk')
                                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                                             @enderror
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="family_dusun" class="font-weight-bold">Dusun</label>
+                                            <select class="form-control @error('family_dusun') is-invalid @enderror"
+                                                    id="family_dusun" name="family_dusun"
+                                                    style="height: 38px; width: 100%;">
+                                                <option value="">Pilih Dusun</option>
+                                                <option value="Dusun 1" {{ old('family_dusun') == 'Dusun 1' ? 'selected' : '' }}>Dusun 1</option>
+                                                <option value="Dusun 2" {{ old('family_dusun') == 'Dusun 2' ? 'selected' : '' }}>Dusun 2</option>
+                                                <option value="Dusun 3" {{ old('family_dusun') == 'Dusun 3' ? 'selected' : '' }}>Dusun 3</option>
+                                            </select>
+                                            @error('family_dusun')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                            <small class="form-text text-muted">
+                                                Pilih dusun yang tersedia atau Ketik manual untuk dusun baru
+                                            </small>
                                         </div>
 
                                         <div class="col-md-4 mb-3">
@@ -636,10 +773,167 @@
 
             // Inisialisasi Select2 untuk dropdown Kartu Keluarga
             $('.select2-kk').select2({
-                placeholder: 'Cari nomor KK atau nama kepala keluarga...',
+                placeholder: 'Ketik nomor KK atau nama kepala keluarga...',
                 allowClear: true,
                 width: '100%',
-                theme: 'bootstrap4'
+                theme: 'bootstrap4',
+                tags: true, // Allow creating new tags
+                createTag: function (params) {
+                    // Check if the input looks like a KK number (16 digits)
+                    const kkNumber = params.term.trim();
+                    if (/^\d{16}$/.test(kkNumber)) {
+                        return {
+                            id: 'new_' + kkNumber,
+                            text: kkNumber + ' (Nomor KK Baru)',
+                            newOption: true
+                        }
+                    }
+                    return null;
+                }
+            });
+
+            // Handle Select2 events for KK number validation
+            $('#kartu_keluarga_id').on('select2:select', function (e) {
+                const selectedData = e.params.data;
+                const suggestionsDiv = $('#kkSuggestions');
+                const newKkPreview = $('#newKkPreview');
+                const dusunField = $('#dusun');
+
+                if (selectedData.newOption) {
+                    // New KK number entered
+                    const kkNumber = selectedData.id.replace('new_', '');
+                    suggestionsDiv.show();
+                    newKkPreview.show().html(`
+                        <strong>Nomor KK Baru:</strong> ${kkNumber}<br>
+                        <small class="text-success">✓ Nomor KK baru akan dibuat otomatis</small><br>
+                        <small class="text-info">ℹ Isi dusun secara manual untuk KK baru</small>
+                    `);
+
+                    // Add hidden field to track new KK number
+                    if (!$('#new_kk_number').length) {
+                        $('form').append('<input type="hidden" id="new_kk_number" name="new_kk_number" value="">');
+                    }
+                    $('#new_kk_number').val(kkNumber);
+
+                    // Clear dusun field for new KK (user needs to fill manually)
+                    dusunField.val('').prop('readonly', false);
+
+                    // Add handler for Enter key when input is focused on suggestions
+                    $(document).one('keydown', function(e) {
+                        if (e.key === 'Enter' && suggestionsDiv.is(':visible')) {
+                            suggestionsDiv.hide();
+                            newKkPreview.hide();
+                        }
+                    });
+                } else {
+                    // Existing KK selected
+                    const kkId = selectedData.id;
+                    const kkData = dataKartuKeluarga[kkId];
+
+                    suggestionsDiv.hide();
+                    newKkPreview.hide();
+                    // Remove hidden field for new KK if it exists
+                    $('#new_kk_number').remove();
+
+                    // Auto-fill dusun field if data exists
+                    if (kkData && kkData.dusun) {
+                        dusunField.val(kkData.dusun);
+
+                        // Show visual feedback that dusun was auto-filled
+                        dusunField.addClass('bg-light border-success');
+                        setTimeout(function() {
+                            dusunField.removeClass('bg-light border-success');
+                        }, 2000);
+
+                        // Show brief notification
+                        const feedback = '<div class="alert alert-success alert-sm fade show" style="position: absolute; z-index: 1000; margin-top: 5px;">' +
+                            '<i class="fas fa-check-circle mr-1"></i> Dusun: ' + kkData.dusun + ' (terisi otomatis)' +
+                            '</div>';
+                        dusunField.parent().append(feedback);
+                        setTimeout(function() {
+                            $(feedback).fadeOut('slow', function() { $(this).remove(); });
+                        }, 3000);
+                    } else {
+                        dusunField.val('').prop('readonly', false);
+                    }
+                }
+            });
+
+            // Enhanced form validation to handle KK submissions
+            $('#mutasiForm').submit(function(e) {
+                const kartuKeluargaId = $('#kartu_keluarga_id').val();
+                const newKkNumber = $('#new_kk_number').val();
+
+                // If we have a new KK number, ensure the kartu_keluarga_id contains the new_ prefix
+                if (newKkNumber && !kartuKeluargaId.startsWith('new_')) {
+                    $('#kartu_keluarga_id').val('new_' + newKkNumber);
+                }
+            });
+
+            // Handle typing in Select2 search to detect new KK numbers
+            $('#kartu_keluarga_id').on('select2:open', function() {
+                const searchField = $('.select2-search__field');
+                let typingTimer;
+
+                searchField.on('input', function() {
+                    clearTimeout(typingTimer);
+                    const searchTerm = $(this).val().trim();
+
+                    typingTimer = setTimeout(() => {
+                        const suggestionsDiv = $('#kkSuggestions');
+                        const newKkPreview = $('#newKkPreview');
+
+                        // Check if input looks like a KK number (16 digits) and doesn't match existing options
+                        if (/^\d{16}$/.test(searchTerm)) {
+                            const existingKK = $('#kartu_keluarga_id option').filter(function() {
+                                return $(this).text().startsWith(searchTerm);
+                            }).length > 0;
+
+                            if (!existingKK) {
+                                suggestionsDiv.show();
+                                newKkPreview.show().html(`
+                                    <strong>Nomor KK Baru Terdeteksi:</strong> ${searchTerm}<br>
+                                    <small class="text-success">Tekan Enter atau pilih untuk menggunakan nomor KK ini</small>
+                                `);
+                            } else {
+                                suggestionsDiv.hide();
+                                newKkPreview.hide();
+                            }
+                        } else {
+                            suggestionsDiv.hide();
+                            newKkPreview.hide();
+                        }
+                    }, 300);
+                });
+            });
+
+            // Handle Select2 searching to show existing KK info
+            $('#kartu_keluarga_id').on('select2:opening', function (e) {
+                // Add custom styling for better visibility of existing options
+                setTimeout(() => {
+                    $('.select2-results__option[role="option"]').each(function() {
+                        if (!$(this).text().includes('(Nomor KK Baru)')) {
+                            // Style existing KK options to show additional info
+                            const text = $(this).text();
+                            if (text.includes(' - ')) {
+                                const parts = text.split(' - ');
+                                $(this).html(`
+                                    <div>
+                                        <strong>${parts[0]}</strong>
+                                        <br><small class="text-muted">Kepala Keluarga: ${parts[1]}</small>
+                                    </div>
+                                `);
+                            }
+                        }
+                    });
+                }, 100);
+            });
+
+            // Hide suggestions when clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.select2-container, #kkSuggestions').length) {
+                    $('#kkSuggestions').hide();
+                }
             });
 
             // Data penduduk untuk detail
@@ -655,6 +949,34 @@
                     }@if(!$loop->last),@endif
                 @endforeach
             };
+
+            // Data Kartu Keluarga untuk auto-fill dusun
+            const dataKartuKeluarga = {
+                @foreach($kartuKeluarga as $kk)
+                    '{{ $kk->id }}': {
+                        no_kk: '{{ $kk->no_kk }}',
+                        dusun: '{{ $kk->dusun ?? '' }}',
+                        kepala_keluarga: '{{ $kk->penduduk->first()->nama ?? 'Tidak ada Kepala Keluarga' }}'
+                    }@if(!$loop->last),@endif
+                @endforeach
+            };
+
+            // Function untuk update dusun field di family form
+            function updateFamilyDusun(kkId) {
+                const kkData = dataKartuKeluarga[kkId];
+                const dusunField = $('#family_dusun');
+
+                if (kkData && kkData.dusun) {
+                    dusunField.val(kkData.dusun);
+                    // Show visual feedback that dusun was auto-filled
+                    dusunField.addClass('bg-light border-success');
+                    setTimeout(function() {
+                        dusunField.removeClass('bg-light border-success');
+                    }, 2000);
+                } else {
+                    dusunField.val('').prop('readonly', false);
+                }
+            }
 
             // Handle click pada badge jenis mutasi
             $('.mutasi-badge').click(function() {
@@ -857,7 +1179,15 @@
                     }
                     if (!kartuKeluargaId) {
                         e.preventDefault();
-                        alert('Silakan pilih kartu keluarga!');
+                        alert('Silakan pilih atau masukkan nomor kartu keluarga!');
+                        $('#kartu_keluarga_id').focus();
+                        return false;
+                    }
+
+                    // Additional validation for new KK numbers
+                    if ($('#new_kk_number').val() && !/^\d{16}$/.test($('#new_kk_number').val())) {
+                        e.preventDefault();
+                        alert('Nomor KK baru harus 16 digit!');
                         $('#kartu_keluarga_id').focus();
                         return false;
                     }
